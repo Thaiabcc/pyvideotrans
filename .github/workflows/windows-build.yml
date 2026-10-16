@@ -1,0 +1,52 @@
+name: Build Windows EXE
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [source.zip, build_windows.py, .github/workflows/windows-build.yml]
+permissions:
+  contents: write
+concurrency:
+  group: windows-build
+  cancel-in-progress: true
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.10'
+          enable-cache: false
+      - name: Extract project source
+        shell: pwsh
+        run: Expand-Archive source.zip -DestinationPath app
+      - name: Download FFmpeg on GitHub
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -OutFile ffmpeg.zip
+          Expand-Archive ffmpeg.zip ffmpeg-download
+          New-Item -ItemType Directory -Force app/ffmpeg | Out-Null
+          Get-ChildItem ffmpeg-download -Recurse -Filter *.exe | Copy-Item -Destination app/ffmpeg
+          Copy-Item build_windows.py app/build_windows.py
+      - name: Build portable Windows application
+        shell: pwsh
+        run: uv run --no-project --python 3.10 python app/build_windows.py
+      - name: Package download
+        shell: pwsh
+        run: 7z a -tzip -mx=3 pyVideoTrans-Windows.zip ./app/dist/sp/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pyVideoTrans-Windows
+          path: pyVideoTrans-Windows.zip
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+      - name: Publish downloadable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $tag = "windows-${{ github.run_number }}"
+          gh release create $tag pyVideoTrans-Windows.zip --title "Windows build ${{ github.run_number }}" --notes "Extract the ZIP and run sp.exe. Built on GitHub Actions; no local Python installation needed. AI models download when used."
