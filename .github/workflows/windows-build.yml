@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: [source.zip, build_windows.py, .github/workflows/windows-build.yml]
+    paths: [source.zip, build_windows.py]
 permissions:
   contents: write
 concurrency:
@@ -37,6 +37,7 @@ jobs:
         shell: pwsh
         run: 7z a -tzip -mx=3 pyVideoTrans-Windows.zip ./app/dist/sp/*
       - uses: actions/upload-artifact@v4
+        id: portable
         with:
           name: pyVideoTrans-Windows
           path: pyVideoTrans-Windows.zip
@@ -49,4 +50,10 @@ jobs:
         shell: pwsh
         run: |
           $tag = "windows-${{ github.run_number }}"
-          gh release create $tag pyVideoTrans-Windows.zip --title "Windows build ${{ github.run_number }}" --notes "Extract the ZIP and run sp.exe. Built on GitHub Actions; no local Python installation needed. AI models download when used."
+          $notes = "Extract the ZIP and run sp.exe. Built and import-tested on GitHub Actions. AI models download when used."
+          if ((Get-Item pyVideoTrans-Windows.zip).Length -ge 2147483648) {
+            $notes += " Download the large Windows package here (available for 7 days): ${{ steps.portable.outputs.artifact-url }}"
+            gh release create $tag --title "Windows build ${{ github.run_number }}" --notes $notes
+          } else {
+            gh release create $tag pyVideoTrans-Windows.zip --title "Windows build ${{ github.run_number }}" --notes $notes
+          }
