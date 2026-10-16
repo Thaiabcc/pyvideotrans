@@ -12,6 +12,14 @@ Cần Internet. Nội dung được gửi tới Google hoặc Microsoft theo d�
 
 SRT tự căn từng câu cho vừa mốc, kể cả cần tăng tốc trên 2x. Giữ đủ lời và không bỏ trống câu chỉ vì câu dài. Câu quá dài sẽ đọc nhanh hơn; mốc bắt đầu câu sau giữ nguyên. Báo cáo `.timeline.json` ghi tốc độ tự căn trong `adjustments`; `issues` chỉ ghi lỗi xử lý thực sự.
 
+## File lớn và chạy tiếp sau lỗi
+
+Văn bản được chia nhỏ thành từng yêu cầu tối đa 1.200 ký tự. Âm thanh được ghép theo từng khối; hỗ trợ WAV RF64 vượt 4 GB và kiểm tra dung lượng trống trước khi ghép.
+
+Nếu mất mạng hoặc hủy, chạy lại cùng nội dung, dịch vụ, giọng, tốc độ và thư mục xuất để dùng lại các đoạn hoàn chỉnh trong `.tts-lite-cache`. Cache hỏng được tạo lại; cache tác vụ được dọn khi xuất thành công. Có thể xóa thư mục cache khi không cần tiếp tục tác vụ cũ.
+
+App chỉ thay file kết quả khi tác vụ hoàn tất. Nếu lỗi mạng, thiếu âm thanh hoặc lỗi ghép, app dừng và giữ file kết quả cũ, không xuất file khuyết câu rồi báo thành công. File dài vẫn cần dung lượng đĩa cho cache/file tạm; dịch vụ online có thể giới hạn yêu cầu.
+
 ## Build trên GitHub
 
 Vào **Actions → Build TTS Lite → Run workflow**. GitHub kiểm tra SRT và xử lý âm thanh, build EXE, chạy thử giao diện, kiểm tra dịch vụ online rồi tạo Release. `build-sizes.json` ghi dung lượng chính xác; `online-check.json` ghi kết quả kiểm tra từng dịch vụ.
