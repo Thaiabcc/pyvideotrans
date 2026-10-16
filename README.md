@@ -10,7 +10,7 @@ Bản thu gọn chỉ dành cho TTS online: nhập văn bản hoặc import SRT/
 
 Cần Internet. Nội dung được gửi tới Google hoặc Microsoft theo dịch vụ đã chọn. gTTS dùng ngôn ngữ `vi` cho tiếng Việt. Edge có giọng HoaiMy và NamMinh; có thể tải thêm danh sách giọng.
 
-SRT giữ mốc thời gian và tự tăng tốc tối đa 2x. Đoạn không vừa mốc được báo riêng, lưu âm thanh gốc và báo cáo `.timeline.json`, không cắt lời.
+SRT tự căn từng câu cho vừa mốc, kể cả cần tăng tốc trên 2x. Giữ đủ lời và không bỏ trống câu chỉ vì câu dài. Câu quá dài sẽ đọc nhanh hơn; mốc bắt đầu câu sau giữ nguyên. Báo cáo `.timeline.json` ghi tốc độ tự căn trong `adjustments`; `issues` chỉ ghi lỗi xử lý thực sự.
 
 ## Build trên GitHub
 
