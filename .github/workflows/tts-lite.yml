@@ -1,0 +1,49 @@
+name: Build TTS Lite
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [tts-lite-source.zip, .github/workflows/tts-lite.yml]
+permissions:
+  contents: write
+concurrency:
+  group: tts-lite
+  cancel-in-progress: true
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Extract TTS-only source
+        shell: pwsh
+        run: Expand-Archive tts-lite-source.zip app-lite
+      - name: Install online TTS and packaging tools
+        shell: pwsh
+        run: python -m pip install -r app-lite/requirements.txt pyinstaller==6.16.0 imageio-ffmpeg==0.6.0
+      - name: Test and build Windows EXE on GitHub
+        shell: pwsh
+        run: python app-lite/build_lite.py
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: TTS-Lite-Windows
+          path: |
+            app-lite/TTS-Lite-Windows.zip
+            app-lite/build-sizes.json
+            app-lite/online-check.json
+          retention-days: 3
+          if-no-files-found: error
+      - name: Publish TTS-only release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $size = Get-Content app-lite/build-sizes.json | ConvertFrom-Json
+          $download = [math]::Round($size.download_bytes / 1MB, 1)
+          $installed = [math]::Round($size.installed_bytes / 1MB, 1)
+          $notes = "TTS Lite: gTTS + Edge TTS online. Import SRT/TXT or type text; export MP3/WAV. Download: $download MiB; extracted application: $installed MiB. Extract TTS-Lite-Windows.zip, then open TTS-Lite.exe. No Python, CUDA, GPU or local AI models required. Includes FFmpeg. Online service check results are in online-check.json."
+          gh release create "tts-lite-${{ github.run_number }}" app-lite/TTS-Lite-Windows.zip app-lite/build-sizes.json app-lite/online-check.json tts-lite-source.zip --title "TTS Lite — gTTS + Edge TTS" --notes $notes --latest
